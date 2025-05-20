@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Inventario - Almacén Naranja</title>
+    <title>Sistema de Inventario Completo</title>
     <style>
         :root {
             --naranja: #FF6D00;
@@ -198,8 +198,8 @@
         <div style="display: flex;">
             <aside class="sidebar">
                 <h3>Operaciones</h3>
-                <button class="sidebar-btn btn-primary" onclick="showForm('create')">➕ Nueva Entrada</button>
-                <button class="sidebar-btn btn-danger" onclick="showForm('delete')">➖ Registrar Salida</button>
+                <button class="sidebar-btn btn-primary" onclick="handleNuevaEntrada()">➕ Nueva Entrada</button>
+                <button class="sidebar-btn btn-danger" onclick="handleRegistrarSalida()">➖ Registrar Salida</button>
                 <button class="sidebar-btn btn-secondary" onclick="showReport()">📊 Generar Reporte</button>
             </aside>
 
@@ -222,7 +222,7 @@
                 <!-- Inventario -->
                 <section id="inventario" class="section">
                     <div class="crud-form" id="formSection" style="display: none;">
-                        <h2>Registro de Movimientos</h2>
+                        <h2 id="formTitle">Registro de Movimientos</h2>
                         <select id="productType" class="form-input">
                             <option value="sanitas">Sanitas</option>
                             <option value="rollos">Rollos</option>
@@ -295,12 +295,22 @@
             document.getElementById(sectionId).classList.add('active');
         }
 
-        // Gestión de formularios
+        // Operaciones del Menú Lateral
         let currentAction = '';
         
-        function showForm(action) {
-            currentAction = action;
+        function handleNuevaEntrada() {
+            currentAction = 'create';
+            showSection('inventario');
             document.getElementById('formSection').style.display = 'block';
+            document.getElementById('formTitle').textContent = 'Registro de Entrada';
+            document.getElementById('productQuantity').value = '';
+        }
+
+        function handleRegistrarSalida() {
+            currentAction = 'delete';
+            showSection('inventario');
+            document.getElementById('formSection').style.display = 'block';
+            document.getElementById('formTitle').textContent = 'Registro de Salida';
             document.getElementById('productQuantity').value = '';
         }
 
@@ -322,10 +332,12 @@
                 return;
             }
 
+            // Actualizar inventario
             inventory[product] = currentAction === 'create' 
                 ? inventory[product] + quantity 
                 : inventory[product] - quantity;
 
+            // Registrar movimiento
             inventory.movimientos.push({
                 product,
                 quantity,
@@ -333,9 +345,13 @@
                 date: new Date().toLocaleString()
             });
 
+            // Actualizar interfaz
             updateDashboard();
             updateTable();
             hideForm();
+            
+            alert(`Operación registrada exitosamente! 
+${product.toUpperCase()}: ${quantity} unidades ${currentAction === 'create' ? 'agregadas' : 'retiradas'}`);
         }
 
         // Actualización de datos
@@ -370,10 +386,10 @@
             const diasRollos = Math.round(inventory.rollos / consumoRollos);
 
             document.getElementById('sanitasProjection').textContent = 
-                `Sanitas: ${diasSanitas} días restantes (${consumoSanitas.toFixed(1)}/día)`;
+                `Sanitas: ${diasSanitas} días restantes (${consumoSanitas.toFixed(1)} unidades/día)`;
             
             document.getElementById('rollosProjection').textContent = 
-                `Rollos: ${diasRollos} días restantes (${consumoRollos.toFixed(1)}/día)`;
+                `Rollos: ${diasRollos} días restantes (${consumoRollos.toFixed(1)} unidades/día)`;
         }
 
         // Reportes
@@ -381,7 +397,7 @@
             const reporte = `=== Reporte de Inventario ===
 Sanitas: ${inventory.sanitas} unidades
 Rollos: ${inventory.rollos} unidades
-Total movimientos: ${inventory.movimientos.length}
+Total movimientos registrados: ${inventory.movimientos.length}
 Última actualización: ${new Date().toLocaleString()}`;
 
             alert(reporte);
