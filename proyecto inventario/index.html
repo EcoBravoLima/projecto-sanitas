@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Inventario - Almacén Naranja</title>
+    <style>
+        :root {
+            --naranja: #FF6D00;
+            --naranja-oscuro: #CC5500;
+            --gris: #2E2E2E;
+            --blanco: #FFFFFF;
+            --error: #dc3545;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui;
+            background-color: #f9f9f9;
+        }
+
+        /* Login */
+        .login-container {
+            max-width: 400px;
+            margin: 5rem auto;
+            padding: 2rem;
+            background: var(--blanco);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        /* Navegación */
+        .navbar {
+            background: var(--naranja);
+            padding: 1rem 2rem;
+            display: flex;
+            gap: 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .nav-link {
+            color: var(--blanco);
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        /* Menú Lateral */
+        .sidebar {
+            width: 250px;
+            background: var(--blanco);
+            padding: 1rem;
+            height: 100vh;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-btn {
+            width: 100%;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: filter 0.3s;
+        }
+
+        /* Contenido Principal */
+        .main-content {
+            padding: 2rem;
+            margin-left: 250px;
+        }
+
+        /* Formularios */
+        .crud-form {
+            max-width: 600px;
+            margin: 2rem 0;
+            padding: 1.5rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        /* Botones */
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: filter 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--naranja);
+            color: var(--blanco);
+        }
+
+        .btn-danger {
+            background: var(--error);
+            color: var(--blanco);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: var(--blanco);
+        }
+
+        /* Tablas */
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .inventory-table th,
+        .inventory-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .inventory-table th {
+            background: var(--naranja);
+            color: var(--blanco);
+        }
+
+        /* Proyección */
+        .projection-card {
+            background: #FFF3E0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        /* Responsividad */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .navbar {
+                flex-direction: column;
+                padding: 1rem;
+            }
+        }
+
+        /* Secciones */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Autenticación -->
+    <div id="loginSection" class="login-container">
+        <h2>Control de Acceso</h2>
+        <input type="text" id="username" class="login-input" placeholder="Usuario" value="admin">
+        <input type="password" id="password" class="login-input" placeholder="Contraseña" value="admin">
+        <button class="btn btn-primary" onclick="handleLogin()">Ingresar</button>
+    </div>
+
+    <!-- Sistema Principal -->
+    <div id="mainApp" style="display: none;">
+        <nav class="navbar">
+            <a class="nav-link" onclick="showSection('inicio')">Inicio</a>
+            <a class="nav-link" onclick="showSection('inventario')">Inventario</a>
+            <a class="nav-link" onclick="showSection('proyeccion')">Proyección</a>
+        </nav>
+
+        <div style="display: flex;">
+            <aside class="sidebar">
+                <h3>Operaciones</h3>
+                <button class="sidebar-btn btn-primary" onclick="showForm('create')">➕ Nueva Entrada</button>
+                <button class="sidebar-btn btn-danger" onclick="showForm('delete')">➖ Registrar Salida</button>
+                <button class="sidebar-btn btn-secondary" onclick="showReport()">📊 Generar Reporte</button>
+            </aside>
+
+            <main class="main-content">
+                <!-- Inicio -->
+                <section id="inicio" class="section active">
+                    <h2>Dashboard de Inventario</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin: 2rem 0;">
+                        <div class="projection-card">
+                            <h3>Sanitas en Stock</h3>
+                            <p id="currentSanitas" style="font-size: 2rem; margin: 1rem 0;">150</p>
+                        </div>
+                        <div class="projection-card">
+                            <h3>Rollos en Stock</h3>
+                            <p id="currentRollos" style="font-size: 2rem; margin: 1rem 0;">75</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Inventario -->
+                <section id="inventario" class="section">
+                    <div class="crud-form" id="formSection" style="display: none;">
+                        <h2>Registro de Movimientos</h2>
+                        <select id="productType" class="form-input">
+                            <option value="sanitas">Sanitas</option>
+                            <option value="rollos">Rollos</option>
+                        </select>
+                        <input type="number" id="productQuantity" class="form-input" placeholder="Cantidad">
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                            <button class="btn btn-primary" onclick="handleSubmit()">Confirmar</button>
+                            <button class="btn btn-secondary" onclick="hideForm()">Cancelar</button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="inventory-table">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Tipo</th>
+                                    <th>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Proyección -->
+                <section id="proyeccion" class="section">
+                    <div class="projection-card">
+                        <h2>Proyección de Stock</h2>
+                        <div style="margin: 1rem 0;">
+                            <p id="sanitasProjection">Sanitas: Calculando...</p>
+                            <p id="rollosProjection">Rollos: Calculando...</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="calculateProjection()">Actualizar Proyección</button>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        let inventory = {
+            sanitas: 150,
+            rollos: 75,
+            movimientos: [],
+            users: [{ username: 'admin', password: 'admin' }]
+        };
+
+        // Autenticación
+        function handleLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if(username === 'admin' && password === 'admin') {
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                updateDashboard();
+                showSection('inicio');
+            } else {
+                alert('Credenciales incorrectas!');
+            }
+        }
+
+        // Navegación
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+        }
+
+        // Gestión de formularios
+        let currentAction = '';
+        
+        function showForm(action) {
+            currentAction = action;
+            document.getElementById('formSection').style.display = 'block';
+            document.getElementById('productQuantity').value = '';
+        }
+
+        function hideForm() {
+            document.getElementById('formSection').style.display = 'none';
+        }
+
+        function handleSubmit() {
+            const product = document.getElementById('productType').value;
+            const quantity = parseInt(document.getElementById('productQuantity').value);
+
+            if(!quantity || quantity <= 0) {
+                alert('Ingrese una cantidad válida!');
+                return;
+            }
+
+            if(currentAction === 'delete' && inventory[product] < quantity) {
+                alert('Stock insuficiente!');
+                return;
+            }
+
+            inventory[product] = currentAction === 'create' 
+                ? inventory[product] + quantity 
+                : inventory[product] - quantity;
+
+            inventory.movimientos.push({
+                product,
+                quantity,
+                type: currentAction === 'create' ? 'Entrada' : 'Salida',
+                date: new Date().toLocaleString()
+            });
+
+            updateDashboard();
+            updateTable();
+            hideForm();
+        }
+
+        // Actualización de datos
+        function updateDashboard() {
+            document.getElementById('currentSanitas').textContent = inventory.sanitas;
+            document.getElementById('currentRollos').textContent = inventory.rollos;
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = inventory.movimientos.map(mov => `
+                <tr>
+                    <td>${mov.product}</td>
+                    <td>${mov.quantity}</td>
+                    <td>${mov.type}</td>
+                    <td>${mov.date}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Proyección
+        function calculateProjection() {
+            const consumoSanitas = inventory.movimientos
+                .filter(m => m.product === 'sanitas' && m.type === 'Salida')
+                .reduce((sum, mov) => sum + mov.quantity, 0) / 30 || 5;
+
+            const consumoRollos = inventory.movimientos
+                .filter(m => m.product === 'rollos' && m.type === 'Salida')
+                .reduce((sum, mov) => sum + mov.quantity, 0) / 30 || 3;
+
+            const diasSanitas = Math.round(inventory.sanitas / consumoSanitas);
+            const diasRollos = Math.round(inventory.rollos / consumoRollos);
+
+            document.getElementById('sanitasProjection').textContent = 
+                `Sanitas: ${diasSanitas} días restantes (${consumoSanitas.toFixed(1)}/día)`;
+            
+            document.getElementById('rollosProjection').textContent = 
+                `Rollos: ${diasRollos} días restantes (${consumoRollos.toFixed(1)}/día)`;
+        }
+
+        // Reportes
+        function showReport() {
+            const reporte = `=== Reporte de Inventario ===
+Sanitas: ${inventory.sanitas} unidades
+Rollos: ${inventory.rollos} unidades
+Total movimientos: ${inventory.movimientos.length}
+Última actualización: ${new Date().toLocaleString()}`;
+
+            alert(reporte);
+        }
+
+        // Inicialización
+        updateTable();
+    </script>
+</body>
+</html>
